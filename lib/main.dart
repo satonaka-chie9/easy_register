@@ -2,10 +2,13 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:path_provider/path_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:csv/csv.dart';
+
+import 'dart:html' as html;
 
 void main() {
   runApp(MyApp());
@@ -211,15 +214,29 @@ class _RegisterScreenState extends State<RegisterScreen> {
     // CSVデータを作成
     String csvData = const ListToCsvConverter().convert(rows);
 
-    // ファイルパスを取得し保存
-    final directory = await getApplicationDocumentsDirectory();
-    final filePath = '${directory.path}/history.csv';
-    final file = File(filePath);
-    await file.writeAsString(csvData);
+    if (kIsWeb) {
+      // Web platform implementation
+      final blob = html.Blob([csvData], 'text/csv');
+      final url = html.Url.createObjectUrlFromBlob(blob);
+      final anchor = html.AnchorElement(href: url)
+        ..setAttribute('download', 'history.csv')
+        ..click();
+      html.Url.revokeObjectUrl(url);
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('履歴がCSVとして保存されました: $filePath')),
-    );
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('履歴がCSVとしてダウンロードされました')),
+      );
+    } else {
+      // Non-web platform implementation
+      final directory = await getApplicationDocumentsDirectory();
+      final filePath = '${directory.path}/history.csv';
+      final file = File(filePath);
+      await file.writeAsString(csvData);
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('履歴がCSVとして保存されました: $filePath')),
+      );
+    }
   }
 
   // 履歴の個別削除
