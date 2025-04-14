@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -63,7 +64,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   TextEditingController priceController = TextEditingController();
   TextEditingController receivedAmountController = TextEditingController();
   final ImagePicker _picker = ImagePicker();
-  File? selectedImage;
+  Uint8List? selectedImage; // FileからUint8Listに変更
   String? changeAmount = '';
   int totalCartPrice = 0; // カートの合計金額
   bool _isEditMode = false;
@@ -145,17 +146,28 @@ class _RegisterScreenState extends State<RegisterScreen> {
     List<String>? productList = prefs.getStringList('products');
     if (productList != null) {
       setState(() {
-        products = productList
-            .map((product) => jsonDecode(product) as Map<String, dynamic>)
-            .toList();
+        products = productList.map((product) {
+          final productMap = jsonDecode(product) as Map<String, dynamic>;
+          if (productMap.containsKey('imageBytes')) {
+            productMap['imageBytes'] =
+                base64Decode(productMap['imageBytes']); // Base64をUint8Listに変換
+          }
+          return productMap;
+        }).toList();
       });
     }
   }
 
   Future<void> _saveProducts() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
-    List<String> productList =
-        products.map((product) => jsonEncode(product)).toList();
+    List<String> productList = products.map((product) {
+      final productCopy = Map<String, dynamic>.from(product);
+      if (productCopy.containsKey('imageBytes')) {
+        productCopy['imageBytes'] =
+            base64Encode(productCopy['imageBytes']); // Uint8ListをBase64に変換
+      }
+      return jsonEncode(productCopy);
+    }).toList();
     await prefs.setStringList('products', productList);
   }
 
@@ -269,8 +281,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   final pickedFile =
                       await _picker.pickImage(source: ImageSource.gallery);
                   if (pickedFile != null) {
+                    final bytes =
+                        await pickedFile.readAsBytes(); // Uint8Listを取得
                     setState(() {
-                      selectedImage = File(pickedFile.path);
+                      selectedImage = bytes;
                     });
                   }
                 },
@@ -289,7 +303,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       products.add({
                         'name': name,
                         'price': price,
-                        'imagePath': selectedImage!.path,
+                        'imageBytes': selectedImage, // Uint8Listを保存
                       });
                     });
 
@@ -307,7 +321,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
           if (selectedImage != null)
             Padding(
               padding: const EdgeInsets.only(top: 8.0),
-              child: Image.file(selectedImage!, width: 50, height: 50),
+              child: Image.memory(selectedImage!,
+                  width: 50, height: 50), // Image.fileからImage.memoryに変更
             ),
         ],
       ),
@@ -323,11 +338,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
           children: List.generate(products.length, (index) {
             return ListTile(
               key: ValueKey('product_$index'),
-              leading: Image.file(
-                File(products[index]['imagePath']),
-                width: 40,
-                height: 40,
-              ),
+              leading: products[index]['imageBytes'] != null
+                  ? Image.memory(
+                      products[index]['imageBytes'], // Uint8Listを使用
+                      width: 40,
+                      height: 40,
+                    )
+                  : null,
               title: Text(
                 products[index]['name'],
                 style: TextStyle(fontWeight: FontWeight.bold),
@@ -369,11 +386,14 @@ class _RegisterScreenState extends State<RegisterScreen> {
                               mainAxisAlignment: MainAxisAlignment.center,
                               crossAxisAlignment: CrossAxisAlignment.center,
                               children: [
-                                Image.file(
-                                  File(products[productIndex]['imagePath']),
-                                  width: 60,
-                                  height: 60,
-                                ),
+                                if (products[productIndex]['imageBytes'] !=
+                                    null)
+                                  Image.memory(
+                                    products[productIndex]
+                                        ['imageBytes'], // Uint8Listを使用
+                                    width: 60,
+                                    height: 60,
+                                  ),
                                 SizedBox(height: 4),
                                 Text(
                                   products[productIndex]['name'],
@@ -419,9 +439,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
             elevation: 4.0,
             margin: EdgeInsets.all(4.0),
             child: ListTile(
-              leading: cart[index]['imagePath'] != null
-                  ? Image.file(
-                      File(cart[index]['imagePath']),
+              leading: cart[index]['imageBytes'] != null
+                  ? Image.memory(
+                      cart[index]['imageBytes'], // Uint8Listを使用
                       width: 50,
                       height: 50,
                       fit: BoxFit.cover,
