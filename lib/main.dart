@@ -8,8 +8,6 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:csv/csv.dart';
 
-import 'dart:html' as html;
-
 void main() {
   runApp(MyApp());
 }
@@ -215,16 +213,22 @@ class _RegisterScreenState extends State<RegisterScreen> {
     String csvData = const ListToCsvConverter().convert(rows);
 
     if (kIsWeb) {
-      // Web platform implementation
-      final blob = html.Blob([csvData], 'text/csv');
-      final url = html.Url.createObjectUrlFromBlob(blob);
-      final anchor = html.AnchorElement(href: url)
-        ..setAttribute('download', 'history.csv')
-        ..click();
-      html.Url.revokeObjectUrl(url);
-
+      // Web platform implementation - show CSV data in dialog
+      showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: Text('CSVデータ'),
+          content: SelectableText(csvData),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: Text('閉じる'),
+            ),
+          ],
+        ),
+      );
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('履歴がCSVとしてダウンロードされました')),
+        SnackBar(content: Text('CSVデータを表示しました。コピーしてご利用ください')),
       );
     } else {
       // Non-web platform implementation
