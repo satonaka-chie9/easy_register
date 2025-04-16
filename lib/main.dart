@@ -75,6 +75,40 @@ class _RegisterScreenState extends State<RegisterScreen> {
     super.initState();
     _loadProducts();
     _loadHistory();
+    if (kIsWeb) {
+      _loadCart();
+    }
+  }
+
+  Future<void> _loadCart() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    List<String>? cartList = prefs.getStringList('cart');
+    if (cartList != null) {
+      setState(() {
+        cart = cartList.map((item) {
+          final itemMap = jsonDecode(item) as Map<String, dynamic>;
+          if (itemMap.containsKey('imageBytes')) {
+            itemMap['imageBytes'] =
+                base64Decode(itemMap['imageBytes']); // Base64をUint8Listに変換
+          }
+          return itemMap;
+        }).toList();
+      });
+      calculateTotalPrice();
+    }
+  }
+
+  Future<void> _saveCart() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    List<String> cartList = cart.map((item) {
+      final itemCopy = Map<String, dynamic>.from(item);
+      if (itemCopy.containsKey('imageBytes')) {
+        itemCopy['imageBytes'] =
+            base64Encode(itemCopy['imageBytes']); // Uint8ListをBase64に変換
+      }
+      return jsonEncode(itemCopy);
+    }).toList();
+    await prefs.setStringList('cart', cartList);
   }
 
   void calculateTotalPrice() {
@@ -90,6 +124,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
       history.add('カートに追加: ${product['name']} ${product['price']}円');
     });
     calculateTotalPrice();
+    if (kIsWeb) {
+      _saveCart();
+    }
   }
 
   void removeFromCart(int index) {
@@ -98,6 +135,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
       cart.removeAt(index);
     });
     calculateTotalPrice();
+    if (kIsWeb) {
+      _saveCart();
+    }
   }
 
   void registerSale() {
@@ -134,6 +174,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
           totalCartPrice = 0;
         });
         _saveHistory();
+        if (kIsWeb) {
+          _saveCart();
+        }
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('受け取った金額が不足しています。')),
