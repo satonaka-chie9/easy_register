@@ -3,3 +3,4 @@
 ですのでなるべく簡単な操作をできるように心がけて作成しています
 またwindowsやandroid、iosなどのマルチプラットフォームを対応目指してます
 flutterで作成してます
+web app version link : https://satonaka-chie9.github.io/easy_register/
