@@ -7,6 +7,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:csv/csv.dart';
+import 'package:file_picker/file_picker.dart';
 
 void main() {
   runApp(MyApp());
@@ -380,6 +381,16 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 },
                 child: Text('商品追加'),
               ),
+              SizedBox(width: 8),
+              ElevatedButton(
+                onPressed: _exportProductsToCSV,
+                child: Text('商品一覧エクスポート'),
+              ),
+              SizedBox(width: 8),
+              ElevatedButton(
+                onPressed: _importProductsFromCSV,
+                child: Text('商品一覧インポート'),
+              ),
             ],
           ),
           if (selectedImage != null)
@@ -390,6 +401,155 @@ class _RegisterScreenState extends State<RegisterScreen> {
             ),
         ],
       ),
+    );
+  }
+
+  Future<void> _exportProductsToCSV() async {
+    List<List<dynamic>> rows = [
+      ['name', 'price', 'imageBytes'], // CSV header
+    ];
+
+    for (var product in products) {
+      String base64Image = '';
+      if (product['imageBytes'] != null) {
+        base64Image = base64Encode(product['imageBytes']);
+      }
+      rows.add([product['name'], product['price'], base64Image]);
+    }
+
+    String csvData = const ListToCsvConverter().convert(rows);
+
+    if (kIsWeb) {
+      // Show CSV data in dialog for web
+      showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: Text('商品一覧CSVデータ'),
+          content: SingleChildScrollView(child: SelectableText(csvData)),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: Text('閉じる'),
+            ),
+          ],
+        ),
+      );
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('CSVデータを表示しました。コピーしてご利用ください')),
+      );
+    } else {
+      // Save CSV file on device
+      final directory = await getApplicationDocumentsDirectory();
+      final filePath = '${directory.path}/products.csv';
+      final file = File(filePath);
+      await file.writeAsString(csvData);
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('商品一覧がCSVとして保存されました: $filePath')),
+      );
+    }
+  }
+
+  Future<void> _importProductsFromCSV() async {
+    if (kIsWeb) {
+      // Web platform: show dialog to paste CSV data
+      TextEditingController csvController = TextEditingController();
+
+      await showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: Text('CSVデータを貼り付けてください'),
+          content: TextField(
+            controller: csvController,
+            maxLines: 10,
+            decoration: InputDecoration(hintText: 'CSVデータをここに貼り付け'),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: Text('キャンセル'),
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context, csvController.text);
+              },
+              child: Text('インポート'),
+            ),
+          ],
+        ),
+      ).then((csvText) {
+        if (csvText != null && csvText.isNotEmpty) {
+          _parseAndLoadProductsFromCSV(csvText);
+        }
+      });
+    } else {
+      // Mobile platform: pick CSV file
+      final result = await FilePicker.platform.pickFiles(
+        type: FileType.custom,
+        allowedExtensions: ['csv'],
+      );
+
+      if (result != null && result.files.single.path != null) {
+        final file = File(result.files.single.path!);
+        final csvText = await file.readAsString();
+        _parseAndLoadProductsFromCSV(csvText);
+      }
+    }
+  }
+
+  void _parseAndLoadProductsFromCSV(String csvText) {
+    List<List<dynamic>> rows = const CsvToListConverter().convert(csvText);
+
+    if (rows.isEmpty) return;
+
+    // Expect header row: ['name', 'price', 'imageBytes']
+    final header = rows[0];
+    if (header.length < 3 ||
+        header[0] != 'name' ||
+        header[1] != 'price' ||
+        header[2] != 'imageBytes') {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('CSVのヘッダーが正しくありません。')),
+      );
+      return;
+    }
+
+    List<Map<String, dynamic>> importedProducts = [];
+
+    for (int i = 1; i < rows.length; i++) {
+      final row = rows[i];
+      if (row.length < 3) continue;
+
+      String name = row[0].toString();
+      int? price = int.tryParse(row[1].toString());
+      String base64Image = row[2].toString();
+
+      if (name.isEmpty || price == null) continue;
+
+      Uint8List? imageBytes;
+      if (base64Image.isNotEmpty) {
+        try {
+          imageBytes = base64Decode(base64Image);
+        } catch (e) {
+          imageBytes = null;
+        }
+      }
+
+      importedProducts.add({
+        'name': name,
+        'price': price,
+        'imageBytes': imageBytes,
+      });
+    }
+
+    setState(() {
+      products = importedProducts;
+    });
+
+    _saveProducts();
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('商品一覧をインポートしました。')),
     );
   }
 
