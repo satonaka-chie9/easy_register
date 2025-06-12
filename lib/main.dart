@@ -3,6 +3,7 @@ import 'dart:io';
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:flutter/services.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:image_picker/image_picker.dart';
@@ -257,16 +258,26 @@ class _RegisterScreenState extends State<RegisterScreen> {
     String csvData = const ListToCsvConverter().convert(rows);
 
     if (kIsWeb) {
-      // Web platform implementation - show CSV data in dialog
+      // Web platform: show CSV data in dialog with copy option
       showDialog(
         context: context,
         builder: (context) => AlertDialog(
-          title: Text('CSVデータ'),
+          title: Text('販売履歴CSVデータ'),
           content: SelectableText(csvData),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
               child: Text('閉じる'),
+            ),
+            TextButton(
+              onPressed: () {
+                // クリップボードにコピー
+                Clipboard.setData(ClipboardData(text: csvData));
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text('CSVデータをクリップボードにコピーしました')),
+                );
+              },
+              child: Text('コピー'),
             ),
           ],
         ),
@@ -420,7 +431,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
     String csvData = const ListToCsvConverter().convert(rows);
 
     if (kIsWeb) {
-      // Show CSV data in dialog for web
+      // Web platform: show CSV data in dialog with copy option
       showDialog(
         context: context,
         builder: (context) => AlertDialog(
@@ -430,6 +441,16 @@ class _RegisterScreenState extends State<RegisterScreen> {
             TextButton(
               onPressed: () => Navigator.pop(context),
               child: Text('閉じる'),
+            ),
+            TextButton(
+              onPressed: () {
+                // クリップボードにコピー
+                Clipboard.setData(ClipboardData(text: csvData));
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text('CSVデータをクリップボードにコピーしました')),
+                );
+              },
+              child: Text('コピー'),
             ),
           ],
         ),
@@ -452,36 +473,50 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
   Future<void> _importProductsFromCSV() async {
     if (kIsWeb) {
-      // Web platform: show dialog to paste CSV data
-      TextEditingController csvController = TextEditingController();
+      // Web platform: use file picker to select CSV file
+      try {
+        FilePickerResult? result = await FilePicker.platform.pickFiles(
+          type: FileType.custom,
+          allowedExtensions: ['csv'],
+          dialogTitle: '商品一覧CSVファイルを選択',
+        );
 
-      await showDialog(
-        context: context,
-        builder: (context) => AlertDialog(
-          title: Text('CSVデータを貼り付けてください'),
-          content: TextField(
-            controller: csvController,
-            maxLines: 10,
-            decoration: InputDecoration(hintText: 'CSVデータをここに貼り付け'),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: Text('キャンセル'),
-            ),
-            TextButton(
-              onPressed: () {
-                Navigator.pop(context, csvController.text);
-              },
-              child: Text('インポート'),
-            ),
-          ],
-        ),
-      ).then((csvText) {
-        if (csvText != null && csvText.isNotEmpty) {
+        if (result != null && result.files.single.bytes != null) {
+          final csvText = utf8.decode(result.files.single.bytes!);
           _parseAndLoadProductsFromCSV(csvText);
         }
-      });
+      } catch (e) {
+        // ファイルピッカーが失敗した場合は従来のダイアログ表示にフォールバック
+        TextEditingController csvController = TextEditingController();
+
+        await showDialog(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: Text('CSVデータを貼り付けてください'),
+            content: TextField(
+              controller: csvController,
+              maxLines: 10,
+              decoration: InputDecoration(hintText: 'CSVデータをここに貼り付け'),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: Text('キャンセル'),
+              ),
+              TextButton(
+                onPressed: () {
+                  Navigator.pop(context, csvController.text);
+                },
+                child: Text('インポート'),
+              ),
+            ],
+          ),
+        ).then((csvText) {
+          if (csvText != null && csvText.isNotEmpty) {
+            _parseAndLoadProductsFromCSV(csvText);
+          }
+        });
+      }
     } else {
       // Mobile platform: pick CSV file
       final result = await FilePicker.platform.pickFiles(
