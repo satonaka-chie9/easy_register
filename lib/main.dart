@@ -1450,9 +1450,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
           IconButton(
             icon: Icon(
               widget.themeMode == ThemeMode.light
-                  ? Icons.dark_mode
+                  ? Icons.light_mode
                   : widget.themeMode == ThemeMode.dark
-                      ? Icons.light_mode
+                      ? Icons.dark_mode
                       : Icons.settings, // システム設定アイコン
               size: ResponsiveUISizeHelper.getResponsiveSize(context, 24),
             ),
