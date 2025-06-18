@@ -1314,28 +1314,36 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 color: Colors.green,
               ),
             ),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-            children: [
-              ElevatedButton(
-                onPressed: registerSale,
-                child: Text(
-                  '売上登録',
-                  style: TextStyle(
-                    fontSize: ResponsiveUISizeHelper.getResponsiveFontSize(context, 14),
+          // ボタン群をスクロール可能にする
+          Container(
+            width: double.infinity,
+            child: SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  ElevatedButton(
+                    onPressed: registerSale,
+                    child: Text(
+                      '売上登録',
+                      style: TextStyle(
+                        fontSize: ResponsiveUISizeHelper.getResponsiveFontSize(context, 14),
+                      ),
+                    ),
                   ),
-                ),
-              ),
-              ElevatedButton(
-                onPressed: _exportHistoryToCSV,
-                child: Text(
-                  '履歴CSV出力',
-                  style: TextStyle(
-                    fontSize: ResponsiveUISizeHelper.getResponsiveFontSize(context, 12),
+                  SizedBox(width: ResponsiveUISizeHelper.getResponsiveSize(context, 8)),
+                  ElevatedButton(
+                    onPressed: _exportHistoryToCSV,
+                    child: Text(
+                      '履歴CSV出力',
+                      style: TextStyle(
+                        fontSize: ResponsiveUISizeHelper.getResponsiveFontSize(context, 12),
+                      ),
+                    ),
                   ),
-                ),
+                ],
               ),
-            ],
+            ),
           ),
         ],
       ),
