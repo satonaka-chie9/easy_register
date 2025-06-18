@@ -1314,36 +1314,43 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 color: Colors.green,
               ),
             ),
-          // ボタン群をスクロール可能にする
-          Container(
-            width: double.infinity,
-            child: SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  ElevatedButton(
-                    onPressed: registerSale,
-                    child: Text(
-                      '売上登録',
-                      style: TextStyle(
-                        fontSize: ResponsiveUISizeHelper.getResponsiveFontSize(context, 14),
-                      ),
-                    ),
+          SizedBox(height: ResponsiveUISizeHelper.getResponsiveSize(context, 16)),
+          // ボタンを左右中央に配置
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              ElevatedButton(
+                onPressed: registerSale,
+                style: ElevatedButton.styleFrom(
+                  padding: EdgeInsets.symmetric(
+                    horizontal: ResponsiveUISizeHelper.getResponsiveSize(context, 16),
+                    vertical: ResponsiveUISizeHelper.getResponsiveSize(context, 12),
                   ),
-                  SizedBox(width: ResponsiveUISizeHelper.getResponsiveSize(context, 8)),
-                  ElevatedButton(
-                    onPressed: _exportHistoryToCSV,
-                    child: Text(
-                      '履歴CSV出力',
-                      style: TextStyle(
-                        fontSize: ResponsiveUISizeHelper.getResponsiveFontSize(context, 12),
-                      ),
-                    ),
+                ),
+                child: Text(
+                  '売上登録',
+                  style: TextStyle(
+                    fontSize: ResponsiveUISizeHelper.getResponsiveFontSize(context, 14),
                   ),
-                ],
+                ),
               ),
-            ),
+              SizedBox(width: ResponsiveUISizeHelper.getResponsiveSize(context, 16)),
+              ElevatedButton(
+                onPressed: _exportHistoryToCSV,
+                style: ElevatedButton.styleFrom(
+                  padding: EdgeInsets.symmetric(
+                    horizontal: ResponsiveUISizeHelper.getResponsiveSize(context, 16),
+                    vertical: ResponsiveUISizeHelper.getResponsiveSize(context, 12),
+                  ),
+                ),
+                child: Text(
+                  '履歴CSV出力',
+                  style: TextStyle(
+                    fontSize: ResponsiveUISizeHelper.getResponsiveFontSize(context, 12),
+                  ),
+                ),
+              ),
+            ],
           ),
         ],
       ),
