@@ -646,6 +646,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
       padding: ResponsiveUISizeHelper.getResponsivePadding(context, const EdgeInsets.all(8.0)),
       child: Column(
         children: [
+          // 商品名と価格の入力フィールド
           Row(
             children: [
               Expanded(
@@ -678,85 +679,93 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   ),
                 ),
               ),
-              SizedBox(width: ResponsiveUISizeHelper.getResponsiveSize(context, 8)),
-              ElevatedButton(
-                onPressed: () async {
-                  try {
-                    final pickedFile =
-                        await _picker.pickImage(source: ImageSource.gallery);
-                    if (pickedFile != null) {
-                      final bytes =
-                          await pickedFile.readAsBytes(); // Uint8Listを取得
-                      setState(() {
-                        selectedImage = bytes;
-                      });
-                    }
-                  } catch (e) {
-                    // iOSでの画像選択エラーを処理
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text('画像の選択に失敗しました: $e')),
-                    );
-                  }
-                },
-                child: Text(
-                  '画像選択',
-                  style: TextStyle(
-                    fontSize: ResponsiveUISizeHelper.getResponsiveFontSize(context, 12),
-                  ),
-                ),
-              ),
-              SizedBox(width: ResponsiveUISizeHelper.getResponsiveSize(context, 8)),
-              ElevatedButton(
-                onPressed: () async {
-                  String name = nameController.text;
-                  int? price = int.tryParse(priceController.text);
-
-                  if (name.isNotEmpty &&
-                      price != null &&
-                      selectedImage != null) {
-                    setState(() {
-                      products.add({
-                        'name': name,
-                        'price': price,
-                        'imageBytes': selectedImage, // Uint8Listを保存
-                      });
-                    });
-
-                    nameController.clear();
-                    priceController.clear();
-                    selectedImage = null;
-
-                    await _saveProducts();
-                  }
-                },
-                child: Text(
-                  '商品追加',
-                  style: TextStyle(
-                    fontSize: ResponsiveUISizeHelper.getResponsiveFontSize(context, 12),
-                  ),
-                ),
-              ),
-              SizedBox(width: ResponsiveUISizeHelper.getResponsiveSize(context, 8)),
-              ElevatedButton(
-                onPressed: _exportProductsToCSV,
-                child: Text(
-                  '商品一覧エクスポート',
-                  style: TextStyle(
-                    fontSize: ResponsiveUISizeHelper.getResponsiveFontSize(context, 10),
-                  ),
-                ),
-              ),
-              SizedBox(width: ResponsiveUISizeHelper.getResponsiveSize(context, 8)),
-              ElevatedButton(
-                onPressed: _importProductsFromCSV,
-                child: Text(
-                  '商品一覧インポート',
-                  style: TextStyle(
-                    fontSize: ResponsiveUISizeHelper.getResponsiveFontSize(context, 10),
-                  ),
-                ),
-              ),
             ],
+          ),
+          SizedBox(height: ResponsiveUISizeHelper.getResponsiveSize(context, 8)),
+          // ボタン群をスクロール可能にする
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Row(
+              children: [
+                ElevatedButton(
+                  onPressed: () async {
+                    try {
+                      final pickedFile =
+                          await _picker.pickImage(source: ImageSource.gallery);
+                      if (pickedFile != null) {
+                        final bytes =
+                            await pickedFile.readAsBytes(); // Uint8Listを取得
+                        setState(() {
+                          selectedImage = bytes;
+                        });
+                      }
+                    } catch (e) {
+                      // iOSでの画像選択エラーを処理
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text('画像の選択に失敗しました: $e')),
+                      );
+                    }
+                  },
+                  child: Text(
+                    '画像選択',
+                    style: TextStyle(
+                      fontSize: ResponsiveUISizeHelper.getResponsiveFontSize(context, 12),
+                    ),
+                  ),
+                ),
+                SizedBox(width: ResponsiveUISizeHelper.getResponsiveSize(context, 8)),
+                ElevatedButton(
+                  onPressed: () async {
+                    String name = nameController.text;
+                    int? price = int.tryParse(priceController.text);
+
+                    if (name.isNotEmpty &&
+                        price != null &&
+                        selectedImage != null) {
+                      setState(() {
+                        products.add({
+                          'name': name,
+                          'price': price,
+                          'imageBytes': selectedImage, // Uint8Listを保存
+                        });
+                      });
+
+                      nameController.clear();
+                      priceController.clear();
+                      selectedImage = null;
+
+                      await _saveProducts();
+                    }
+                  },
+                  child: Text(
+                    '商品追加',
+                    style: TextStyle(
+                      fontSize: ResponsiveUISizeHelper.getResponsiveFontSize(context, 12),
+                    ),
+                  ),
+                ),
+                SizedBox(width: ResponsiveUISizeHelper.getResponsiveSize(context, 8)),
+                ElevatedButton(
+                  onPressed: _exportProductsToCSV,
+                  child: Text(
+                    '商品一覧エクスポート',
+                    style: TextStyle(
+                      fontSize: ResponsiveUISizeHelper.getResponsiveFontSize(context, 10),
+                    ),
+                  ),
+                ),
+                SizedBox(width: ResponsiveUISizeHelper.getResponsiveSize(context, 8)),
+                ElevatedButton(
+                  onPressed: _importProductsFromCSV,
+                  child: Text(
+                    '商品一覧インポート',
+                    style: TextStyle(
+                      fontSize: ResponsiveUISizeHelper.getResponsiveFontSize(context, 10),
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
           if (selectedImage != null)
             Padding(
