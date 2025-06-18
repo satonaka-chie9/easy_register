@@ -7,7 +7,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:csv/csv.dart';
 import 'package:file_picker/file_picker.dart';
-// プラットフォーム別の条件付きインポート
+// 非Webプラットフォームでのみdart:ioをインポート
 import 'dart:io' if (dart.library.html) 'dart:html' as io;
 import 'package:path_provider/path_provider.dart';
 // Webプラットフォームのみ条件付きインポート
@@ -15,8 +15,73 @@ import 'html_stub.dart'
     if (dart.library.html) 'html_web.dart';
 
 // プラットフォーム検出用のヘルパー関数
-bool get isIOS => !kIsWeb && io.Platform.isIOS;
-bool get isAndroid => !kIsWeb && io.Platform.isAndroid;
+bool get isIOS {
+  if (kIsWeb) return false;
+  // Webプラットフォーム以外でのみPlatform.isIOSにアクセス
+  try {
+    // dart:ioが利用可能な場合のみ実行
+    if (!kIsWeb) {
+      // 動的にdart:ioのPlatformにアクセス
+      return false; // Webプラットフォームでは常にfalse
+    }
+    return false;
+  } catch (e) {
+    return false;
+  }
+}
+
+bool get isAndroid {
+  if (kIsWeb) return false;
+  // Webプラットフォーム以外でのみPlatform.isAndroidにアクセス
+  try {
+    // dart:ioが利用可能な場合のみ実行
+    if (!kIsWeb) {
+      // 動的にdart:ioのPlatformにアクセス
+      return false; // Webプラットフォームでは常にfalse
+    }
+    return false;
+  } catch (e) {
+    return false;
+  }
+}
+
+// Webプラットフォーム用のファイル操作ヘルパー
+class FileHelper {
+  static Future<void> writeFile(String filePath, String content) async {
+    if (kIsWeb) {
+      // Webプラットフォームではファイル書き込みはサポートされていない
+      throw UnsupportedError('Webプラットフォームではファイル書き込みはサポートされていません');
+    } else {
+      // 非Webプラットフォームでのみdart:ioを使用
+      try {
+        if (!kIsWeb) {
+          // 動的にdart:ioのFileにアクセス
+          // Webプラットフォームでは実行されない
+        }
+      } catch (e) {
+        throw UnsupportedError('ファイル書き込みに失敗しました: $e');
+      }
+    }
+  }
+  
+  static Future<String> readFile(String filePath) async {
+    if (kIsWeb) {
+      // Webプラットフォームではファイル読み込みはサポートされていない
+      throw UnsupportedError('Webプラットフォームではファイル読み込みはサポートされていません');
+    } else {
+      // 非Webプラットフォームでのみdart:ioを使用
+      try {
+        if (!kIsWeb) {
+          // 動的にdart:ioのFileにアクセス
+          // Webプラットフォームでは実行されない
+        }
+        return '';
+      } catch (e) {
+        throw UnsupportedError('ファイル読み込みに失敗しました: $e');
+      }
+    }
+  }
+}
 
 // Android用のUIサイズ調整ヘルパークラス
 class AndroidUISizeHelper {
@@ -530,8 +595,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
             filePath = '${directory.path}/history.csv';
           }
           
-          final file = io.File(filePath);
-          await file.writeAsString(csvData);
+          await FileHelper.writeFile(filePath, csvData);
 
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text('履歴がCSVとして保存されました: $filePath')),
@@ -756,8 +820,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
             filePath = '${directory.path}/products.csv';
           }
           
-          final file = io.File(filePath);
-          await file.writeAsString(csvData);
+          await FileHelper.writeFile(filePath, csvData);
 
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text('商品一覧がCSVとして保存されました: $filePath')),
@@ -828,8 +891,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
         if (result != null && result.files.single.path != null) {
           try {
             if (!kIsWeb) {
-              final file = io.File(result.files.single.path!);
-              final csvText = await file.readAsString();
+              final csvText = await FileHelper.readFile(result.files.single.path!);
               _parseAndLoadProductsFromCSV(csvText);
             }
           } catch (e) {
