@@ -9,6 +9,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:csv/csv.dart';
 import 'package:file_picker/file_picker.dart';
+import 'package:html' as html;
 
 void main() {
   runApp(MyApp());
@@ -258,32 +259,17 @@ class _RegisterScreenState extends State<RegisterScreen> {
     String csvData = const ListToCsvConverter().convert(rows);
 
     if (kIsWeb) {
-      // Web platform: show CSV data in dialog with copy option
-      showDialog(
-        context: context,
-        builder: (context) => AlertDialog(
-          title: Text('販売履歴CSVデータ'),
-          content: SelectableText(csvData),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: Text('閉じる'),
-            ),
-            TextButton(
-              onPressed: () {
-                // クリップボードにコピー
-                Clipboard.setData(ClipboardData(text: csvData));
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text('CSVデータをクリップボードにコピーしました')),
-                );
-              },
-              child: Text('コピー'),
-            ),
-          ],
-        ),
-      );
+      // Web platform: download CSV file
+      final bytes = utf8.encode(csvData);
+      final blob = html.Blob([bytes]);
+      final url = html.Url.createObjectUrlFromBlob(blob);
+      final anchor = html.AnchorElement(href: url)
+        ..setAttribute('download', '販売履歴_${DateTime.now().toString().substring(0, 19).replaceAll(':', '-')}.csv')
+        ..click();
+      html.Url.revokeObjectUrl(url);
+      
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('CSVデータを表示しました。コピーしてご利用ください')),
+        SnackBar(content: Text('販売履歴CSVファイルをダウンロードしました')),
       );
     } else {
       // Non-web platform implementation
@@ -431,32 +417,17 @@ class _RegisterScreenState extends State<RegisterScreen> {
     String csvData = const ListToCsvConverter().convert(rows);
 
     if (kIsWeb) {
-      // Web platform: show CSV data in dialog with copy option
-      showDialog(
-        context: context,
-        builder: (context) => AlertDialog(
-          title: Text('商品一覧CSVデータ'),
-          content: SingleChildScrollView(child: SelectableText(csvData)),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: Text('閉じる'),
-            ),
-            TextButton(
-              onPressed: () {
-                // クリップボードにコピー
-                Clipboard.setData(ClipboardData(text: csvData));
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text('CSVデータをクリップボードにコピーしました')),
-                );
-              },
-              child: Text('コピー'),
-            ),
-          ],
-        ),
-      );
+      // Web platform: download CSV file
+      final bytes = utf8.encode(csvData);
+      final blob = html.Blob([bytes]);
+      final url = html.Url.createObjectUrlFromBlob(blob);
+      final anchor = html.AnchorElement(href: url)
+        ..setAttribute('download', '商品一覧_${DateTime.now().toString().substring(0, 19).replaceAll(':', '-')}.csv')
+        ..click();
+      html.Url.revokeObjectUrl(url);
+      
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('CSVデータを表示しました。コピーしてご利用ください')),
+        SnackBar(content: Text('商品一覧CSVファイルをダウンロードしました')),
       );
     } else {
       // Save CSV file on device
