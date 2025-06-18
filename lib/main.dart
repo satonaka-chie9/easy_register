@@ -109,6 +109,146 @@ class AndroidUISizeHelper {
   }
 }
 
+// Webプラットフォーム専用のUIサイズ調整ヘルパークラス
+class WebUISizeHelper {
+  static double getResponsiveSize(BuildContext context, double baseSize) {
+    if (!kIsWeb) return baseSize;
+    
+    final mediaQuery = MediaQuery.of(context);
+    final screenWidth = mediaQuery.size.width;
+    final screenHeight = mediaQuery.size.height;
+    
+    // 画面サイズに基づいてスケール係数を計算
+    double scaleFactor = 1.0;
+    
+    // 画面幅に基づく調整
+    if (screenWidth < 600) {
+      scaleFactor = 0.8; // 小さい画面（モバイル）
+    } else if (screenWidth < 900) {
+      scaleFactor = 0.9; // 中程度の画面（タブレット）
+    } else if (screenWidth < 1200) {
+      scaleFactor = 1.0; // 標準サイズ
+    } else if (screenWidth < 1600) {
+      scaleFactor = 1.1; // 大きい画面
+    } else {
+      scaleFactor = 1.2; // 非常に大きい画面
+    }
+    
+    // 画面の向きも考慮
+    if (screenHeight > screenWidth) {
+      // 縦向きの場合、少し小さくする
+      scaleFactor *= 0.95;
+    }
+    
+    return baseSize * scaleFactor;
+  }
+  
+  static EdgeInsets getResponsivePadding(BuildContext context, EdgeInsets basePadding) {
+    if (!kIsWeb) return basePadding;
+    
+    final mediaQuery = MediaQuery.of(context);
+    final screenWidth = mediaQuery.size.width;
+    
+    double scaleFactor = 1.0;
+    if (screenWidth < 600) {
+      scaleFactor = 0.7;
+    } else if (screenWidth < 900) {
+      scaleFactor = 0.85;
+    } else if (screenWidth < 1200) {
+      scaleFactor = 1.0;
+    } else if (screenWidth < 1600) {
+      scaleFactor = 1.2;
+    } else {
+      scaleFactor = 1.4;
+    }
+    
+    return EdgeInsets.all(basePadding.left * scaleFactor);
+  }
+  
+  static double getResponsiveFontSize(BuildContext context, double baseFontSize) {
+    if (!kIsWeb) return baseFontSize;
+    
+    final mediaQuery = MediaQuery.of(context);
+    final screenWidth = mediaQuery.size.width;
+    
+    double scaleFactor = 1.0;
+    if (screenWidth < 600) {
+      scaleFactor = 0.85;
+    } else if (screenWidth < 900) {
+      scaleFactor = 0.95;
+    } else if (screenWidth < 1200) {
+      scaleFactor = 1.0;
+    } else if (screenWidth < 1600) {
+      scaleFactor = 1.1;
+    } else {
+      scaleFactor = 1.2;
+    }
+    
+    return baseFontSize * scaleFactor;
+  }
+  
+  static double getResponsiveImageSize(BuildContext context, double baseSize) {
+    if (!kIsWeb) return baseSize;
+    
+    final mediaQuery = MediaQuery.of(context);
+    final screenWidth = mediaQuery.size.width;
+    
+    double scaleFactor = 1.0;
+    if (screenWidth < 600) {
+      scaleFactor = 0.7;
+    } else if (screenWidth < 900) {
+      scaleFactor = 0.85;
+    } else if (screenWidth < 1200) {
+      scaleFactor = 1.0;
+    } else if (screenWidth < 1600) {
+      scaleFactor = 1.3;
+    } else {
+      scaleFactor = 1.5;
+    }
+    
+    return baseSize * scaleFactor;
+  }
+}
+
+// プラットフォーム別のUIサイズ調整ヘルパークラス
+class ResponsiveUISizeHelper {
+  static double getResponsiveSize(BuildContext context, double baseSize) {
+    if (kIsWeb) {
+      return WebUISizeHelper.getResponsiveSize(context, baseSize);
+    } else if (isAndroid) {
+      return AndroidUISizeHelper.getResponsiveSize(context, baseSize);
+    }
+    return baseSize;
+  }
+  
+  static EdgeInsets getResponsivePadding(BuildContext context, EdgeInsets basePadding) {
+    if (kIsWeb) {
+      return WebUISizeHelper.getResponsivePadding(context, basePadding);
+    } else if (isAndroid) {
+      return AndroidUISizeHelper.getResponsivePadding(context, basePadding);
+    }
+    return basePadding;
+  }
+  
+  static double getResponsiveFontSize(BuildContext context, double baseFontSize) {
+    if (kIsWeb) {
+      return WebUISizeHelper.getResponsiveFontSize(context, baseFontSize);
+    } else if (isAndroid) {
+      return AndroidUISizeHelper.getResponsiveFontSize(context, baseFontSize);
+    }
+    return baseFontSize;
+  }
+  
+  static double getResponsiveImageSize(BuildContext context, double baseSize) {
+    if (kIsWeb) {
+      return WebUISizeHelper.getResponsiveImageSize(context, baseSize);
+    } else if (isAndroid) {
+      return AndroidUISizeHelper.getResponsiveImageSize(context, baseSize);
+    }
+    return baseSize;
+  }
+}
+
 void main() {
   runApp(MyApp());
 }
@@ -439,7 +579,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
   Widget _buildProductInput() {
     return Padding(
-      padding: AndroidUISizeHelper.getResponsivePadding(context, const EdgeInsets.all(8.0)),
+      padding: ResponsiveUISizeHelper.getResponsivePadding(context, const EdgeInsets.all(8.0)),
       child: Column(
         children: [
           Row(
@@ -450,15 +590,15 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   decoration: InputDecoration(
                     labelText: '商品名',
                     labelStyle: TextStyle(
-                      fontSize: AndroidUISizeHelper.getResponsiveFontSize(context, 14),
+                      fontSize: ResponsiveUISizeHelper.getResponsiveFontSize(context, 14),
                     ),
                   ),
                   style: TextStyle(
-                    fontSize: AndroidUISizeHelper.getResponsiveFontSize(context, 14),
+                    fontSize: ResponsiveUISizeHelper.getResponsiveFontSize(context, 14),
                   ),
                 ),
               ),
-              SizedBox(width: AndroidUISizeHelper.getResponsiveSize(context, 8)),
+              SizedBox(width: ResponsiveUISizeHelper.getResponsiveSize(context, 8)),
               Expanded(
                 child: TextField(
                   controller: priceController,
@@ -466,15 +606,15 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   decoration: InputDecoration(
                     labelText: '価格',
                     labelStyle: TextStyle(
-                      fontSize: AndroidUISizeHelper.getResponsiveFontSize(context, 14),
+                      fontSize: ResponsiveUISizeHelper.getResponsiveFontSize(context, 14),
                     ),
                   ),
                   style: TextStyle(
-                    fontSize: AndroidUISizeHelper.getResponsiveFontSize(context, 14),
+                    fontSize: ResponsiveUISizeHelper.getResponsiveFontSize(context, 14),
                   ),
                 ),
               ),
-              SizedBox(width: AndroidUISizeHelper.getResponsiveSize(context, 8)),
+              SizedBox(width: ResponsiveUISizeHelper.getResponsiveSize(context, 8)),
               ElevatedButton(
                 onPressed: () async {
                   try {
@@ -497,11 +637,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 child: Text(
                   '画像選択',
                   style: TextStyle(
-                    fontSize: AndroidUISizeHelper.getResponsiveFontSize(context, 12),
+                    fontSize: ResponsiveUISizeHelper.getResponsiveFontSize(context, 12),
                   ),
                 ),
               ),
-              SizedBox(width: AndroidUISizeHelper.getResponsiveSize(context, 8)),
+              SizedBox(width: ResponsiveUISizeHelper.getResponsiveSize(context, 8)),
               ElevatedButton(
                 onPressed: () async {
                   String name = nameController.text;
@@ -528,27 +668,27 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 child: Text(
                   '商品追加',
                   style: TextStyle(
-                    fontSize: AndroidUISizeHelper.getResponsiveFontSize(context, 12),
+                    fontSize: ResponsiveUISizeHelper.getResponsiveFontSize(context, 12),
                   ),
                 ),
               ),
-              SizedBox(width: AndroidUISizeHelper.getResponsiveSize(context, 8)),
+              SizedBox(width: ResponsiveUISizeHelper.getResponsiveSize(context, 8)),
               ElevatedButton(
                 onPressed: _exportProductsToCSV,
                 child: Text(
                   '商品一覧エクスポート',
                   style: TextStyle(
-                    fontSize: AndroidUISizeHelper.getResponsiveFontSize(context, 10),
+                    fontSize: ResponsiveUISizeHelper.getResponsiveFontSize(context, 10),
                   ),
                 ),
               ),
-              SizedBox(width: AndroidUISizeHelper.getResponsiveSize(context, 8)),
+              SizedBox(width: ResponsiveUISizeHelper.getResponsiveSize(context, 8)),
               ElevatedButton(
                 onPressed: _importProductsFromCSV,
                 child: Text(
                   '商品一覧インポート',
                   style: TextStyle(
-                    fontSize: AndroidUISizeHelper.getResponsiveFontSize(context, 10),
+                    fontSize: ResponsiveUISizeHelper.getResponsiveFontSize(context, 10),
                   ),
                 ),
               ),
@@ -556,11 +696,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
           ),
           if (selectedImage != null)
             Padding(
-              padding: EdgeInsets.only(top: AndroidUISizeHelper.getResponsiveSize(context, 8.0)),
+              padding: EdgeInsets.only(top: ResponsiveUISizeHelper.getResponsiveSize(context, 8.0)),
               child: Image.memory(
                 selectedImage!,
-                width: AndroidUISizeHelper.getResponsiveImageSize(context, 50),
-                height: AndroidUISizeHelper.getResponsiveImageSize(context, 50),
+                width: ResponsiveUISizeHelper.getResponsiveImageSize(context, 50),
+                height: ResponsiveUISizeHelper.getResponsiveImageSize(context, 50),
               ),
             ),
         ],
@@ -807,28 +947,28 @@ class _RegisterScreenState extends State<RegisterScreen> {
               leading: products[index]['imageBytes'] != null
                   ? Image.memory(
                       products[index]['imageBytes'], // Uint8Listを使用
-                      width: AndroidUISizeHelper.getResponsiveImageSize(context, 40),
-                      height: AndroidUISizeHelper.getResponsiveImageSize(context, 40),
+                      width: ResponsiveUISizeHelper.getResponsiveImageSize(context, 40),
+                      height: ResponsiveUISizeHelper.getResponsiveImageSize(context, 40),
                     )
                   : null,
               title: Text(
                 products[index]['name'],
                 style: TextStyle(
                   fontWeight: FontWeight.bold,
-                  fontSize: AndroidUISizeHelper.getResponsiveFontSize(context, 16),
+                  fontSize: ResponsiveUISizeHelper.getResponsiveFontSize(context, 16),
                 ),
               ),
               subtitle: Text(
                 '${products[index]['price']}円',
                 style: TextStyle(
-                  fontSize: AndroidUISizeHelper.getResponsiveFontSize(context, 14),
+                  fontSize: ResponsiveUISizeHelper.getResponsiveFontSize(context, 14),
                 ),
               ),
               trailing: IconButton(
                 icon: Icon(
                   Icons.delete,
                   color: Colors.red,
-                  size: AndroidUISizeHelper.getResponsiveSize(context, 24),
+                  size: ResponsiveUISizeHelper.getResponsiveSize(context, 24),
                 ),
                 onPressed: () => _removeProduct(index),
               ),
@@ -847,7 +987,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 ? products.length
                 : startIndex + 3;
             return Padding(
-              padding: EdgeInsets.symmetric(vertical: AndroidUISizeHelper.getResponsiveSize(context, 4.0)),
+              padding: EdgeInsets.symmetric(vertical: ResponsiveUISizeHelper.getResponsiveSize(context, 4.0)),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.start,
                 children: List.generate(endIndex - startIndex, (index) {
@@ -856,8 +996,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     child: GestureDetector(
                       onTap: () => addToCart(products[productIndex]),
                       child: Card(
-                        elevation: AndroidUISizeHelper.getResponsiveSize(context, 4.0),
-                        margin: EdgeInsets.symmetric(horizontal: AndroidUISizeHelper.getResponsiveSize(context, 4.0)),
+                        elevation: ResponsiveUISizeHelper.getResponsiveSize(context, 4.0),
+                        margin: EdgeInsets.symmetric(horizontal: ResponsiveUISizeHelper.getResponsiveSize(context, 4.0)),
                         child: Stack(
                           children: [
                             Column(
@@ -869,24 +1009,24 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                   Image.memory(
                                     products[productIndex]
                                         ['imageBytes'], // Uint8Listを使用
-                                    width: AndroidUISizeHelper.getResponsiveImageSize(context, 60),
-                                    height: AndroidUISizeHelper.getResponsiveImageSize(context, 60),
+                                    width: ResponsiveUISizeHelper.getResponsiveImageSize(context, 60),
+                                    height: ResponsiveUISizeHelper.getResponsiveImageSize(context, 60),
                                   ),
-                                SizedBox(height: AndroidUISizeHelper.getResponsiveSize(context, 4)),
+                                SizedBox(height: ResponsiveUISizeHelper.getResponsiveSize(context, 4)),
                                 Text(
                                   products[productIndex]['name'],
                                   style: TextStyle(
                                     fontWeight: FontWeight.bold,
-                                    fontSize: AndroidUISizeHelper.getResponsiveFontSize(context, 14),
+                                    fontSize: ResponsiveUISizeHelper.getResponsiveFontSize(context, 14),
                                   ),
                                   textAlign: TextAlign.center,
                                 ),
-                                SizedBox(height: AndroidUISizeHelper.getResponsiveSize(context, 2)),
+                                SizedBox(height: ResponsiveUISizeHelper.getResponsiveSize(context, 2)),
                                 Text(
                                   '${products[productIndex]['price']}円',
                                   style: TextStyle(
                                     color: Colors.grey,
-                                    fontSize: AndroidUISizeHelper.getResponsiveFontSize(context, 12),
+                                    fontSize: ResponsiveUISizeHelper.getResponsiveFontSize(context, 12),
                                   ),
                                 ),
                               ],
@@ -899,7 +1039,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                   icon: Icon(
                                     Icons.delete,
                                     color: Colors.red,
-                                    size: AndroidUISizeHelper.getResponsiveSize(context, 20),
+                                    size: ResponsiveUISizeHelper.getResponsiveSize(context, 20),
                                   ),
                                   onPressed: () => _removeProduct(productIndex),
                                 ),
@@ -924,14 +1064,14 @@ class _RegisterScreenState extends State<RegisterScreen> {
         itemCount: cart.length,
         itemBuilder: (context, index) {
           return Card(
-            elevation: AndroidUISizeHelper.getResponsiveSize(context, 4.0),
-            margin: EdgeInsets.all(AndroidUISizeHelper.getResponsiveSize(context, 4.0)),
+            elevation: ResponsiveUISizeHelper.getResponsiveSize(context, 4.0),
+            margin: EdgeInsets.all(ResponsiveUISizeHelper.getResponsiveSize(context, 4.0)),
             child: ListTile(
               leading: cart[index]['imageBytes'] != null
                   ? Image.memory(
                       cart[index]['imageBytes'], // Uint8Listを使用
-                      width: AndroidUISizeHelper.getResponsiveImageSize(context, 50),
-                      height: AndroidUISizeHelper.getResponsiveImageSize(context, 50),
+                      width: ResponsiveUISizeHelper.getResponsiveImageSize(context, 50),
+                      height: ResponsiveUISizeHelper.getResponsiveImageSize(context, 50),
                       fit: BoxFit.cover,
                     )
                   : null,
@@ -939,19 +1079,19 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 cart[index]['name'],
                 style: TextStyle(
                   fontWeight: FontWeight.bold,
-                  fontSize: AndroidUISizeHelper.getResponsiveFontSize(context, 16),
+                  fontSize: ResponsiveUISizeHelper.getResponsiveFontSize(context, 16),
                 ),
               ),
               subtitle: Text(
                 '${cart[index]['price']}円',
                 style: TextStyle(
-                  fontSize: AndroidUISizeHelper.getResponsiveFontSize(context, 14),
+                  fontSize: ResponsiveUISizeHelper.getResponsiveFontSize(context, 14),
                 ),
               ),
               trailing: IconButton(
                 icon: Icon(
                   Icons.delete,
-                  size: AndroidUISizeHelper.getResponsiveSize(context, 24),
+                  size: ResponsiveUISizeHelper.getResponsiveSize(context, 24),
                 ),
                 onPressed: () => removeFromCart(index),
               ),
@@ -978,11 +1118,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   child: Column(
                     children: [
                       Padding(
-                        padding: AndroidUISizeHelper.getResponsivePadding(context, const EdgeInsets.all(8.0)),
+                        padding: ResponsiveUISizeHelper.getResponsivePadding(context, const EdgeInsets.all(8.0)),
                         child: Text(
                           receivedAmountController.text,
                           style: TextStyle(
-                            fontSize: AndroidUISizeHelper.getResponsiveFontSize(context, 24),
+                            fontSize: ResponsiveUISizeHelper.getResponsiveFontSize(context, 24),
                           ),
                         ),
                       ),
@@ -1030,7 +1170,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                   child: Text(
                                     text,
                                     style: TextStyle(
-                                      fontSize: AndroidUISizeHelper.getResponsiveFontSize(context, 24),
+                                      fontSize: ResponsiveUISizeHelper.getResponsiveFontSize(context, 24),
                                     ),
                                   ),
                                 ),
@@ -1046,7 +1186,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         child: Text(
                           '完了',
                           style: TextStyle(
-                            fontSize: AndroidUISizeHelper.getResponsiveFontSize(context, 16),
+                            fontSize: ResponsiveUISizeHelper.getResponsiveFontSize(context, 16),
                           ),
                         ),
                       ),
@@ -1063,13 +1203,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
   Widget _buildCartControls() {
     return Padding(
-      padding: AndroidUISizeHelper.getResponsivePadding(context, const EdgeInsets.all(8.0)),
+      padding: ResponsiveUISizeHelper.getResponsivePadding(context, const EdgeInsets.all(8.0)),
       child: Column(
         children: [
           Text(
             '合計金額: $totalCartPrice 円',
             style: TextStyle(
-              fontSize: AndroidUISizeHelper.getResponsiveFontSize(context, 20),
+              fontSize: ResponsiveUISizeHelper.getResponsiveFontSize(context, 20),
               fontWeight: FontWeight.bold,
             ),
           ),
@@ -1082,11 +1222,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 decoration: InputDecoration(
                   labelText: '受け取り金額',
                   labelStyle: TextStyle(
-                    fontSize: AndroidUISizeHelper.getResponsiveFontSize(context, 14),
+                    fontSize: ResponsiveUISizeHelper.getResponsiveFontSize(context, 14),
                   ),
                 ),
                 style: TextStyle(
-                  fontSize: AndroidUISizeHelper.getResponsiveFontSize(context, 14),
+                  fontSize: ResponsiveUISizeHelper.getResponsiveFontSize(context, 14),
                 ),
               ),
             ),
@@ -1095,7 +1235,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
             Text(
               changeAmount!,
               style: TextStyle(
-                fontSize: AndroidUISizeHelper.getResponsiveFontSize(context, 18),
+                fontSize: ResponsiveUISizeHelper.getResponsiveFontSize(context, 18),
                 color: Colors.green,
               ),
             ),
@@ -1107,7 +1247,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 child: Text(
                   '売上登録',
                   style: TextStyle(
-                    fontSize: AndroidUISizeHelper.getResponsiveFontSize(context, 14),
+                    fontSize: ResponsiveUISizeHelper.getResponsiveFontSize(context, 14),
                   ),
                 ),
               ),
@@ -1116,7 +1256,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 child: Text(
                   '履歴CSV出力',
                   style: TextStyle(
-                    fontSize: AndroidUISizeHelper.getResponsiveFontSize(context, 12),
+                    fontSize: ResponsiveUISizeHelper.getResponsiveFontSize(context, 12),
                   ),
                 ),
               ),
@@ -1132,7 +1272,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
     return IconButton(
       icon: Icon(
         Icons.history,
-        size: AndroidUISizeHelper.getResponsiveSize(context, 24),
+        size: ResponsiveUISizeHelper.getResponsiveSize(context, 24),
       ),
       onPressed: () {
         showDialog(
@@ -1143,12 +1283,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 title: Text(
                   '履歴',
                   style: TextStyle(
-                    fontSize: AndroidUISizeHelper.getResponsiveFontSize(context, 18),
+                    fontSize: ResponsiveUISizeHelper.getResponsiveFontSize(context, 18),
                   ),
                 ),
                 content: SizedBox(
-                  height: AndroidUISizeHelper.getResponsiveSize(context, 300),
-                  width: AndroidUISizeHelper.getResponsiveSize(context, 300),
+                  height: ResponsiveUISizeHelper.getResponsiveSize(context, 300),
+                  width: ResponsiveUISizeHelper.getResponsiveSize(context, 300),
                   child: Column(
                     children: [
                       Expanded(
@@ -1159,13 +1299,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
                               title: Text(
                                 history[index],
                                 style: TextStyle(
-                                  fontSize: AndroidUISizeHelper.getResponsiveFontSize(context, 14),
+                                  fontSize: ResponsiveUISizeHelper.getResponsiveFontSize(context, 14),
                                 ),
                               ),
                               trailing: IconButton(
                                 icon: Icon(
                                   Icons.delete,
-                                  size: AndroidUISizeHelper.getResponsiveSize(context, 20),
+                                  size: ResponsiveUISizeHelper.getResponsiveSize(context, 20),
                                 ),
                                 onPressed: () {
                                   _removeHistory(index);
@@ -1184,7 +1324,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         child: Text(
                           '一括削除',
                           style: TextStyle(
-                            fontSize: AndroidUISizeHelper.getResponsiveFontSize(context, 14),
+                            fontSize: ResponsiveUISizeHelper.getResponsiveFontSize(context, 14),
                           ),
                         ),
                       ),
@@ -1199,7 +1339,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     child: Text(
                       '閉じる',
                       style: TextStyle(
-                        fontSize: AndroidUISizeHelper.getResponsiveFontSize(context, 14),
+                        fontSize: ResponsiveUISizeHelper.getResponsiveFontSize(context, 14),
                       ),
                     ),
                   ),
@@ -1219,7 +1359,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
         title: Text(
           'レジスター',
           style: TextStyle(
-            fontSize: AndroidUISizeHelper.getResponsiveFontSize(context, 20),
+            fontSize: ResponsiveUISizeHelper.getResponsiveFontSize(context, 20),
           ),
         ),
         actions: [
@@ -1231,14 +1371,14 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   : widget.themeMode == ThemeMode.dark
                       ? Icons.light_mode
                       : Icons.settings, // システム設定アイコン
-              size: AndroidUISizeHelper.getResponsiveSize(context, 24),
+              size: ResponsiveUISizeHelper.getResponsiveSize(context, 24),
             ),
             onPressed: widget.toggleTheme, // テーマ切り替え
           ),
           IconButton(
             icon: Icon(
               _isEditMode ? Icons.done : Icons.edit,
-              size: AndroidUISizeHelper.getResponsiveSize(context, 24),
+              size: ResponsiveUISizeHelper.getResponsiveSize(context, 24),
             ),
             onPressed: () {
               setState(() {
@@ -1262,7 +1402,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     Text(
                       'カート',
                       style: TextStyle(
-                        fontSize: AndroidUISizeHelper.getResponsiveFontSize(context, 18),
+                        fontSize: ResponsiveUISizeHelper.getResponsiveFontSize(context, 18),
                         fontWeight: FontWeight.bold,
                       ),
                     ),
@@ -1277,11 +1417,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
           Align(
             alignment: Alignment.bottomRight,
             child: Padding(
-              padding: AndroidUISizeHelper.getResponsivePadding(context, const EdgeInsets.all(8.0)),
+              padding: ResponsiveUISizeHelper.getResponsivePadding(context, const EdgeInsets.all(8.0)),
               child: Text(
                 'created by satonaka_chie9',
                 style: TextStyle(
-                  fontSize: AndroidUISizeHelper.getResponsiveFontSize(context, 12),
+                  fontSize: ResponsiveUISizeHelper.getResponsiveFontSize(context, 12),
                   color: Colors.grey,
                 ),
               ),
