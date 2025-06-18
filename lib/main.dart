@@ -1,15 +1,17 @@
 import 'dart:convert';
-import 'dart:io';
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/services.dart';
-import 'package:path_provider/path_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:csv/csv.dart';
 import 'package:file_picker/file_picker.dart';
-import 'package:html' as html;
+import 'package:path_provider/path_provider.dart';
+import 'dart:io';
+// Webプラットフォームのみ条件付きインポート
+import 'html_stub.dart'
+    if (dart.library.html) 'html_web.dart';
 
 void main() {
   runApp(MyApp());
@@ -260,27 +262,41 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
     if (kIsWeb) {
       // Web platform: download CSV file
-      final bytes = utf8.encode(csvData);
-      final blob = html.Blob([bytes]);
-      final url = html.Url.createObjectUrlFromBlob(blob);
-      final anchor = html.AnchorElement(href: url)
-        ..setAttribute('download', '販売履歴_${DateTime.now().toString().substring(0, 19).replaceAll(':', '-')}.csv')
-        ..click();
-      html.Url.revokeObjectUrl(url);
-      
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('販売履歴CSVファイルをダウンロードしました')),
-      );
+      try {
+        final bytes = utf8.encode(csvData);
+        final blob = HtmlHelper.createBlob(bytes);
+        final url = HtmlHelper.createObjectUrlFromBlob(blob);
+        final anchor = HtmlHelper.createAnchor(url)
+          ..setAttribute('download', '販売履歴_${DateTime.now().toString().substring(0, 19).replaceAll(':', '-')}.csv')
+          ..click();
+        HtmlHelper.revokeObjectUrl(url);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('販売履歴CSVファイルをダウンロードしました')),
+        );
+      } catch (e) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('CSVダウンロードに失敗しました: $e')),
+        );
+      }
     } else {
       // Non-web platform implementation
-      final directory = await getApplicationDocumentsDirectory();
-      final filePath = '${directory.path}/history.csv';
-      final file = File(filePath);
-      await file.writeAsString(csvData);
+      try {
+        // Webプラットフォーム以外でのみdart:ioとpath_providerを使用
+        if (!kIsWeb) {
+          final directory = await getApplicationDocumentsDirectory();
+          final filePath = '${directory.path}/history.csv';
+          final file = File(filePath);
+          await file.writeAsString(csvData);
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('履歴がCSVとして保存されました: $filePath')),
-      );
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('履歴がCSVとして保存されました: $filePath')),
+          );
+        }
+      } catch (e) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('ファイルの保存に失敗しました: $e')),
+        );
+      }
     }
   }
 
@@ -418,27 +434,40 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
     if (kIsWeb) {
       // Web platform: download CSV file
-      final bytes = utf8.encode(csvData);
-      final blob = html.Blob([bytes]);
-      final url = html.Url.createObjectUrlFromBlob(blob);
-      final anchor = html.AnchorElement(href: url)
-        ..setAttribute('download', '商品一覧_${DateTime.now().toString().substring(0, 19).replaceAll(':', '-')}.csv')
-        ..click();
-      html.Url.revokeObjectUrl(url);
-      
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('商品一覧CSVファイルをダウンロードしました')),
-      );
+      try {
+        final bytes = utf8.encode(csvData);
+        final blob = HtmlHelper.createBlob(bytes);
+        final url = HtmlHelper.createObjectUrlFromBlob(blob);
+        final anchor = HtmlHelper.createAnchor(url)
+          ..setAttribute('download', '商品一覧_${DateTime.now().toString().substring(0, 19).replaceAll(':', '-')}.csv')
+          ..click();
+        HtmlHelper.revokeObjectUrl(url);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('商品一覧CSVファイルをダウンロードしました')),
+        );
+      } catch (e) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('CSVダウンロードに失敗しました: $e')),
+        );
+      }
     } else {
       // Save CSV file on device
-      final directory = await getApplicationDocumentsDirectory();
-      final filePath = '${directory.path}/products.csv';
-      final file = File(filePath);
-      await file.writeAsString(csvData);
+      try {
+        if (!kIsWeb) {
+          final directory = await getApplicationDocumentsDirectory();
+          final filePath = '${directory.path}/products.csv';
+          final file = File(filePath);
+          await file.writeAsString(csvData);
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('商品一覧がCSVとして保存されました: $filePath')),
-      );
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('商品一覧がCSVとして保存されました: $filePath')),
+          );
+        }
+      } catch (e) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('ファイルの保存に失敗しました: $e')),
+        );
+      }
     }
   }
 
@@ -496,9 +525,17 @@ class _RegisterScreenState extends State<RegisterScreen> {
       );
 
       if (result != null && result.files.single.path != null) {
-        final file = File(result.files.single.path!);
-        final csvText = await file.readAsString();
-        _parseAndLoadProductsFromCSV(csvText);
+        try {
+          if (!kIsWeb) {
+            final file = File(result.files.single.path!);
+            final csvText = await file.readAsString();
+            _parseAndLoadProductsFromCSV(csvText);
+          }
+        } catch (e) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('ファイルの読み込みに失敗しました: $e')),
+          );
+        }
       }
     }
   }
